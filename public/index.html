@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#111b1a">
+    <title>大手 SSH</title>
+    <link rel="stylesheet" href="/assets/xterm/xterm.css">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="大手 SSH 首页"><span class="brand-mark">大</span><span>大手 SSH</span></a>
+        <div class="connection-state"><span class="state-dot" id="state-dot"></span><span id="connection-label">未连接</span></div>
+      </header>
+
+      <section class="workspace">
+        <aside class="panel" id="connect-panel">
+          <div class="panel-heading"><div><p class="eyebrow">REMOTE SHELL</p><h1>连接主机</h1></div><button class="icon-button" id="close-panel" type="button" aria-label="收起连接面板" title="收起连接面板">×</button></div>
+          <form id="connect-form" autocomplete="off">
+            <label class="field"><span>配对码</span><input id="pairing-code" type="password" inputmode="text" placeholder="在运行服务的电脑终端查看" required></label>
+            <div class="field-row">
+              <label class="field grow"><span>主机</span><input id="host" name="host" placeholder="server.example.com" required></label>
+              <label class="field port-field"><span>端口</span><input id="port" name="port" type="number" inputmode="numeric" value="22" min="1" max="65535" required></label>
+            </div>
+            <label class="field"><span>用户名</span><input id="username" name="username" autocomplete="username" placeholder="用户名" required></label>
+            <div class="field"><span>认证方式</span><div class="segmented"><button type="button" data-auth="password" class="selected">密码</button><button type="button" data-auth="key">SSH 私钥</button></div></div>
+            <label class="field" id="password-field"><span>密码</span><input id="password" type="password" autocomplete="current-password" placeholder="只用于本次连接"></label>
+            <div class="field hidden" id="key-fields">
+              <label class="field"><span>私钥</span><textarea id="private-key" rows="5" spellcheck="false" placeholder="粘贴 PEM / OpenSSH 私钥，仅保存在当前页面内存"></textarea></label>
+              <label class="field"><span>私钥口令 <em>可选</em></span><input id="passphrase" type="password" autocomplete="off" placeholder="加密私钥的口令"></label>
+            </div>
+            <p class="form-note">首次连接会核对 SSH 主机指纹。凭据不会写入服务器配置。</p>
+            <button class="primary-button" type="submit" id="connect-button"><span>连接</span><span aria-hidden="true">↗</span></button>
+          </form>
+          <div class="recent-area" id="recent-area"><div class="recent-heading"><span>最近主机</span><button type="button" id="clear-recents">清除</button></div><div id="recent-list" class="recent-list"></div></div>
+        </aside>
+
+        <section class="terminal-area" aria-label="SSH 终端">
+          <div class="terminal-toolbar">
+            <button type="button" class="toolbar-button" id="show-connect" title="连接另一台主机"><span aria-hidden="true">＋</span><span>连接</span></button>
+            <div class="terminal-tools">
+              <button type="button" class="toolbar-button compact" data-key="\u0003" title="发送 Ctrl+C">Ctrl+C</button>
+              <button type="button" class="toolbar-button compact" data-key="\t" title="发送 Tab">Tab</button>
+              <button type="button" class="toolbar-button compact" data-key="\u001b" title="发送 Esc">Esc</button>
+              <button type="button" class="toolbar-button compact" data-key="\u001b[A" title="上方向键">↑</button>
+              <button type="button" class="toolbar-button compact" data-key="\u001b[B" title="下方向键">↓</button>
+              <button type="button" class="toolbar-button compact" data-key="\u001b[D" title="左方向键">←</button>
+              <button type="button" class="toolbar-button compact" data-key="\u001b[C" title="右方向键">→</button>
+            </div>
+            <button type="button" class="icon-button disconnect-button" id="disconnect-button" title="断开连接" aria-label="断开连接">⏻</button>
+          </div>
+          <div class="terminal-frame"><div id="terminal"></div><div class="empty-state" id="empty-state"><div class="empty-icon">⌘</div><h2>终端待命</h2><p>连接一台 SSH 主机开始工作</p><button type="button" class="primary-button" id="empty-connect">连接主机 <span>↗</span></button></div></div>
+          <div class="mobile-bar"><button type="button" data-key="\u0003">Ctrl+C</button><button type="button" data-key="\t">Tab</button><button type="button" data-key="\u001b">Esc</button><button type="button" data-key="\u001b[A">↑</button><button type="button" data-key="\u001b[B">↓</button><button type="button" data-key="\u001b[D">←</button><button type="button" data-key="\u001b[C">→</button><button type="button" id="keyboard-button">键盘</button></div>
+        </section>
+      </section>
+      <footer class="app-footer"><span>SSH 主机指纹校验已启用</span><span>凭据只在当前会话中使用</span></footer>
+    </main>
+
+    <dialog id="host-dialog" class="confirm-dialog"><form method="dialog"><p class="eyebrow">FIRST CONNECTION</p><h2>确认主机指纹</h2><p class="dialog-host" id="dialog-host"></p><code id="fingerprint"></code><p class="dialog-note">请通过可信渠道核对指纹。确认后会保存到运行服务的电脑。</p><div class="dialog-actions"><button value="deny" class="secondary-button">取消连接</button><button value="trust" class="primary-button">信任并连接</button></div></form></dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="/assets/xterm/xterm.js"></script>
+    <script src="/assets/xterm-fit/addon-fit.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
